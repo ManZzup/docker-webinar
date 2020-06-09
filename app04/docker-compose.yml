@@ -1,0 +1,38 @@
+version: '3'
+
+services:
+    mongodb:
+        hostname: mongodb
+        image: 'mongo:3.6.0'
+        environment:
+            - MONGO_DATA_DIR=/data/db
+            - MONGO_LOG_DIR=/dev/null
+        ports:
+        - 27017:27017
+        volumes:
+        - './data/dev/mongo:/data/db'
+        command: mongod --smallfiles --logpath=/dev/null 
+
+    nginx:
+        image: nginx:1.17-alpine
+        container_name: nginx
+        volumes:
+            - ./nginx.conf:/etc/nginx/nginx.conf
+            - ./app/build:/sites/app
+            - ./sites/admin:/sites/admin
+        ports:
+            - 3000-3007:3000-3007
+        restart: on-failure
+    
+    user_api:
+        build:
+            dockerfile: Dockerfile
+            context: ./users-service
+        expose: 
+            - "8000"
+        command: node app.js
+        environment:
+            - NODE_ENV=production
+            - MONGO_URI=mongodb://mongodb/GuardWatch
+        restart: on-failure
+   
